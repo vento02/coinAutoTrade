@@ -76,11 +76,12 @@ def main():
         print("Login OK")
         print("==========Autotrade start==========")
     except:
-        print("!!Login ERROR!!")
+        print("!!Login ERROR!!", e)
     # 로그인_끝
     else:
         print("내 잔고 : " + str(format(int(my_Balance), ",")) + " 원")
         print("date:" + str(datetime.datetime.now()))
+        # 무한 루프를 돌되, sleep()을 통해 루프 사이의 간격을 조절합니다.
         while 1:
             try:
                 balances = upbit.get_balances()
@@ -122,20 +123,20 @@ def main():
                             
                             # 실제 매도된 금액의 오차 감안
                             if (money * 0.99) < have_coin:
-                                if ticker_rate <= -7.0:
+                                if ticker_rate <= STOP_LOSS_THRESHOLD:
                                     amount = upbit.get_balance(TICKER)       # 현재 코인 보유 수량	  
                                     upbit.sell_market_order(TICKER, amount)   # 시장가에 매도
                             
                             # 실제 매수된 금액의 오차 감안
                             elif (money * 0.49) < have_coin and (money * 0.51) > have_coin:
-                                if ticker_rate <= -5.0:
+                                if ticker_rate <= ADDITIONAL_BUY_THRESHOLD:
                                     upbit.buy_market_order(TICKER, money * 0.5)   # 시장가에 코인 매수
                                     
             except pyupbit.exceptions.UpbitError as e:
                 print(f"Upbit API error: {e}")
-                time.sleep(1)
             except Exception as e:
                 print(f"An unexpected error occurred: {e}")
+            finally:
                 time.sleep(1)
     
 
