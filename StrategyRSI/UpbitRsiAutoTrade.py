@@ -8,10 +8,10 @@ RSI_PERIOD = 14
 RSI_BUY_THRESHOLD = 30
 RSI_SELL_THRESHOLD = 70
 FIRST_BUY_RATE = 0.5
-#이 밑은 아직 하드코딩해놓음
 ADDITIONAL_BUY_THRESHOLD = -5.0
 STOP_LOSS_THRESHOLD = -7.0
 TICKER = "KRW-BTC"
+
 
 access = os.environ["access"]  # Upbit API access 키
 secret = os.environ["secret"]  # Upbit API secret 키
@@ -88,21 +88,21 @@ def main():
                 my_money = float(balances[0]['balance'])
                 money = math.floor(my_money)
                 df_day = pyupbit.get_ohlcv(TICKER, interval="day")     # 일봉 정보
-                rsi14 = get_rsi(df_day, 14).iloc[-1]                          # 당일 RSI
-                before_rsi14 = get_rsi(df_day, 14).iloc[-2]                   # 작일 RSI
+                rsi14 = get_rsi(df_day, RSI_PERIOD).iloc[-1]                          # 당일 RSI
+                before_rsi14 = get_rsi(df_day, RSI_PERIOD).iloc[-2]                   # 작일 RSI
                 
                 if has_coin(TICKER, balances):
                 # 매도 조건 충족
                     if rsi14 < RSI_SELL_THRESHOLD and before_rsi14 > RSI_SELL_THRESHOLD:
                             amount = upbit.get_balance(TICKER)       # 현재 코인 보유 수량	  
                             upbit.sell_market_order(TICKER, amount)  # 시장가에 매도 
-                            balances = upbit.get_balances()                 # 매도했으니 잔고를 최신화!
+                            balances = upbit.get_balances()                 # 매도했으니 잔고를 갱신
 
                 else:
-                    # 매수 조건 충족
-                        if rsi14 > RSI_BUY_THRESHOLD and before_rsi14 < RSI_BUY_THRESHOLD:
-                            upbit.buy_market_order(TICKER, money * 0.5)    # 시장가에 코인 매수
-                            balances = upbit.get_balances()         	    # 매수했으니 잔고를 최신화!
+                # 매수 조건 충족
+                    if rsi14 > RSI_BUY_THRESHOLD and before_rsi14 < RSI_BUY_THRESHOLD:
+                        upbit.buy_market_order(TICKER, money * FIRST_BUY_RATE)    # 시장가에 코인 매수
+                        balances = upbit.get_balances()         	    # 매수했으니 잔고를 갱신
                 
                 balances = upbit.get_balances()
                 ticker_rate = get_revenue_rate(balances, TICKER)
@@ -130,7 +130,7 @@ def main():
                             # 실제 매수된 금액의 오차 감안
                             elif (money * 0.49) < have_coin and (money * 0.51) > have_coin:
                                 if ticker_rate <= ADDITIONAL_BUY_THRESHOLD:
-                                    upbit.buy_market_order(TICKER, money * 0.5)   # 시장가에 코인 매수
+                                    upbit.buy_market_order(TICKER, money * FIRST_BUY_RATE)   # 시장가에 코인 매수
                                     
             except pyupbit.exceptions.UpbitError as e:
                 print(f"Upbit API error: {e}")
