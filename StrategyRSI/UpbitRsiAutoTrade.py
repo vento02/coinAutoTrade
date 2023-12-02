@@ -8,10 +8,10 @@ RSI_PERIOD = 14
 RSI_BUY_THRESHOLD = 30
 RSI_SELL_THRESHOLD = 70
 FIRST_BUY_RATE = 0.5
-#이 밑은 아직 하드코딩해놓음
 ADDITIONAL_BUY_THRESHOLD = -5.0
 STOP_LOSS_THRESHOLD = -7.0
 TICKER = "KRW-BTC"
+
 
 access = os.environ["access"]  # Upbit API access 키
 secret = os.environ["secret"]  # Upbit API secret 키
@@ -68,6 +68,35 @@ def get_revenue_rate(balances, ticker):
 
     return revenue_rate
 
+def evaluate_fluctuation(balances, ticker, money, ticker_rate):
+    # 실제로 매도하다 보면, 단위와 주문 시간의 오차로 인해 금액간에 오차가 발생하는 경우가 있다.
+    # 주문한 금액과 실제 주문된 금액의 오차를 감안하기 위해 모수 매수된 상태는 0.99를,
+    # 최초 50% 매수된 상태는 0.49를 곱하는 것으로 확인하였다.
+    # 만약 코인에 할당된 금액이 모두 매수 되었을 때는 수익률이 -7% 이하일 때 매도를 진행하고, 
+    # 최초로 매수한 코인만 존재할 때는 수익률이 -5% 이하일 때 물을 타주도록 하였다.
+    # 이 부분은 이해가 어렵다면 지워도 될 듯
+    have_coin = 0.0
+    for coin in balances:
+        coin_ticker = coin['unit_currency'] + "-" + coin['currency']
+        have_coin = float(ticker['avg_buy_price']) * float(coin_ticker['balance'])
+        if ticker == coin_ticker:
+                have_coin = float(coin_ticker['avg_buy_price']) * float(coin_ticker['balance'])
+                ticker_rate = get_revenue_rate(balances, ticker)
+                
+                # 실제 매도된 금액의 오차 감안
+                if (money * 0.99) < have_coin:
+                    if ticker_rate <= STOP_LOSS_THRESHOLD:
+                        amount = upbit.get_balance(ticker)       # 현재 코인 보유 수량	  
+                        upbit.sell_market_order(ticker, amount)   # 시장가에 매도
+                
+                # 실제 매수된 금액의 오차 감안
+                elif (money * 0.49) < have_coin and (money * 0.51) > have_coin:
+                    if ticker_rate <= ADDITIONAL_BUY_THRESHOLD:
+                        upbit.buy_market_order(ticker, money * FIRST_BUY_RATE)   # 시장가에 코인 매수
+                
+                break      
+    
+
 def main():
     # 로그인_시작
     try:
@@ -76,66 +105,42 @@ def main():
         print("Login OK")
         print("==========Autotrade start==========")
     except:
-        print("!!Login ERROR!!")
+        print("!!Login ERROR!!", e)
     # 로그인_끝
     else:
         print("내 잔고 : " + str(format(int(my_Balance), ",")) + " 원")
         print("date:" + str(datetime.datetime.now()))
+        # 무한 루프를 돌되, sleep()을 통해 루프 사이의 간격을 조절합니다.
         while 1:
             try:
                 balances = upbit.get_balances()
                 my_money = float(balances[0]['balance'])
                 money = math.floor(my_money)
                 df_day = pyupbit.get_ohlcv(TICKER, interval="day")     # 일봉 정보
-                rsi14 = get_rsi(df_day, 14).iloc[-1]                          # 당일 RSI
-                before_rsi14 = get_rsi(df_day, 14).iloc[-2]                   # 작일 RSI
+                rsi14 = get_rsi(df_day, RSI_PERIOD).iloc[-1]                          # 당일 RSI
+                before_rsi14 = get_rsi(df_day, RSI_PERIOD).iloc[-2]                   # 전날 RSI
                 
                 if has_coin(TICKER, balances):
                 # 매도 조건 충족
                     if rsi14 < RSI_SELL_THRESHOLD and before_rsi14 > RSI_SELL_THRESHOLD:
                             amount = upbit.get_balance(TICKER)       # 현재 코인 보유 수량	  
                             upbit.sell_market_order(TICKER, amount)  # 시장가에 매도 
-                            balances = upbit.get_balances()                 # 매도했으니 잔고를 최신화!
 
                 else:
-                    # 매수 조건 충족
-                        if rsi14 > RSI_BUY_THRESHOLD and before_rsi14 < RSI_BUY_THRESHOLD:
-                            upbit.buy_market_order(TICKER, money * 0.5)    # 시장가에 코인 매수
-                            balances = upbit.get_balances()         	    # 매수했으니 잔고를 최신화!
+                # 매수 조건 충족
+                    if rsi14 > RSI_BUY_THRESHOLD and before_rsi14 < RSI_BUY_THRESHOLD:
+                        upbit.buy_market_order(TICKER, money * FIRST_BUY_RATE)    # 시장가에 코인 매수
                 
                 balances = upbit.get_balances()
                 ticker_rate = get_revenue_rate(balances, TICKER)
-
-                # 실제로 매도하다 보면, 단위와 주문 시간의 오차로 인해 금액간에 오차가 발생하는 경우가 있다.
-                # 주문한 금액과 실제 주문된 금액의 오차를 감안하기 위해 모수 매수된 상태는 0.99를,
-                # 최초 50% 매수된 상태는 0.49를 곱하는 것으로 확인하였다.
-                # 만약 코인에 할당된 금액이 모두 매수 되었을 때는 수익률이 -7% 이하일 때 매도를 진행하고, 
-                # 최초로 매수한 코인만 존재할 때는 수익률이 -5% 이하일 때 물을 타주도록 하였다.
-                # 이 부분은 이해가 어렵다면 지워도 될 듯
-                have_coin = 0.0
-                for coin in balances:
-                    coin_ticker = coin['unit_currency'] + "-" + coin['currency']
-                    have_coin = float(TICKER['avg_buy_price']) * float(coin_ticker['balance'])
-                    if TICKER == coin_ticker:
-                            have_coin = float(coin_ticker['avg_buy_price']) * float(coin_ticker['balance'])
-                            ticker_rate = get_revenue_rate(balances, TICKER)
-                            
-                            # 실제 매도된 금액의 오차 감안
-                            if (money * 0.99) < have_coin:
-                                if ticker_rate <= -7.0:
-                                    amount = upbit.get_balance(TICKER)       # 현재 코인 보유 수량	  
-                                    upbit.sell_market_order(TICKER, amount)   # 시장가에 매도
-                            
-                            # 실제 매수된 금액의 오차 감안
-                            elif (money * 0.49) < have_coin and (money * 0.51) > have_coin:
-                                if ticker_rate <= -5.0:
-                                    upbit.buy_market_order(TICKER, money * 0.5)   # 시장가에 코인 매수
-                                    
+                
+                evaluate_fluctuation(balances, TICKER, money, ticker_rate)
+                
             except pyupbit.exceptions.UpbitError as e:
                 print(f"Upbit API error: {e}")
-                time.sleep(1)
             except Exception as e:
                 print(f"An unexpected error occurred: {e}")
+            finally:
                 time.sleep(1)
     
 
