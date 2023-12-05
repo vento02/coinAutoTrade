@@ -17,8 +17,8 @@ def nowtime():
     return now
 
 
-myToken = os.environ["Slack_Token"]  # Access Token
-myChannel = "비트코인-자동매매"  # 채널 이름 OR 채널 ID
+myToken = os.environ["Slack_RSI_Token"]  # Access Token
+myChannel = "비트코인-rsi"  # 채널 이름 OR 채널 ID
 
 try:
     post_message(myToken, myChannel, " ")
