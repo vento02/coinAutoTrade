@@ -18,6 +18,15 @@ secret = os.environ["secret"]  # Upbit API secret 키
 upbit = pyupbit.Upbit(access, secret)
 # 수수료 아직 설정안해놓음
 
+def get_balance(ticker):
+    balances = upbit.get_balances()
+    for b in balances:
+        if b["currency"] == ticker:  # 통화
+            if b["balance"] is not None:
+                return float(b["balance"])
+            else:
+                return 0
+
 def get_rsi(df, period=RSI_PERIOD):
 
     # 전일 대비 변동 평균
@@ -78,9 +87,11 @@ def evaluate_fluctuation(balances, ticker, money, ticker_rate):
     have_coin = 0.0
     for coin in balances:
         coin_ticker = coin['unit_currency'] + "-" + coin['currency']
-        have_coin = float(ticker['avg_buy_price']) * float(coin_ticker['balance'])
+        coin_avg_buy_price = float(coin['avg_buy_price'])
+        coin_balance = float(coin['balance'])
+        
+        have_coin = coin_avg_buy_price * coin_balance
         if ticker == coin_ticker:
-                have_coin = float(coin_ticker['avg_buy_price']) * float(coin_ticker['balance'])
                 ticker_rate = get_revenue_rate(balances, ticker)
                 
                 # 실제 매도된 금액의 오차 감안
@@ -101,7 +112,7 @@ def main():
     # 로그인_시작
     try:
         upbit = pyupbit.Upbit(access, secret)
-        my_Balance = upbit.get_balances("KRW")  # 내 잔고
+        my_Balance = get_balance("KRW")  # 내 잔고
         print("Login OK")
         print("==========Autotrade start==========")
     except:
@@ -135,9 +146,7 @@ def main():
                 ticker_rate = get_revenue_rate(balances, TICKER)
                 
                 evaluate_fluctuation(balances, TICKER, money, ticker_rate)
-                
-            except pyupbit.exceptions.UpbitError as e:
-                print(f"Upbit API error: {e}")
+
             except Exception as e:
                 print(f"An unexpected error occurred: {e}")
             finally:
