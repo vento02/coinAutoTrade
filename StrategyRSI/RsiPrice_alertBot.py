@@ -11,7 +11,7 @@ TICKER = "KRW-BTC"
 access = os.environ["access"]  # Upbit API access 키
 secret = os.environ["secret"]  # Upbit API secret 키
 
-def get_rsi(df, period=RSI_PERIOD):
+def get_rsi(df, period=14):
     df['change'] = df['close'].diff()
     df['up'] = df['change'].apply(lambda x: x if x > 0 else 0)
     df['down'] = df['change'].apply(lambda x: -x if x < 0 else 0)

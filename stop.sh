@@ -8,3 +8,5 @@ echo "==kill check=="
 echo $(ps -ef | grep UpbitAutoTrade.py)
 echo "==UpbitAutoTrade Stop=="
 echo "[$(date)] ==!UpbitAutoTrade Stop!==" >>./nohup.out
+
+

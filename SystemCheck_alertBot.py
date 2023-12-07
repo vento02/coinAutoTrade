@@ -34,3 +34,5 @@ except:
         myChannel,
         "!!🏴‍☠️❗🔴 Trading System Dead!!\nServer Time : " + str(nowtime()),
     )
+    
+    
