@@ -2,7 +2,9 @@ import datetime
 import math
 import os
 import time
+import requests
 import pyupbit
+import datetime
 
 RSI_PERIOD = 14
 RSI_BUY_THRESHOLD = 30
@@ -13,9 +15,11 @@ STOP_LOSS_THRESHOLD = -7.0
 TICKER = "KRW-BTC"
 
 
-access = os.environ["access"]  # Upbit API access 키
-secret = os.environ["secret"]  # Upbit API secret 키
-upbit = pyupbit.Upbit(access, secret)
+access = "002U3quMzJCiSJbCUxfNLoef7lS8ng6dmc4rcQ2s"  # Upbit API access 키
+secret = "duxbZdAmFXg1MsotEhVFiA2ozPvyyFO7fPk05Xpi"  # Upbit API secret 키
+# upbit = pyupbit.Upbit(access, secret)
+myToken = "xoxb-6271291229760-6294322066675-4RIePujfUOgfQfGwutRLXZ9i"  # Access Token
+myChannel = "비트코인-rsi"  # 채널 이름 OR 채널 ID
 # 수수료 아직 설정안해놓음
 
 def get_balance(ticker):
@@ -59,6 +63,13 @@ def has_coin(ticker, balances):
             
     return result
 
+# 종목 현재 가격조회_시작
+def get_current_price(ticker):
+    # return pyupbit.get_orderbook(tickers=ticker)[0]["orderbook_units"][0]["ask_price"] # pyupbit==0.2.18
+    return pyupbit.get_orderbook(ticker=ticker)["orderbook_units"][0][
+        "ask_price"
+    ]  # pyupbit==0.2.21
+
 # 수익률 확인 함수
 # 티커(비트코인)의 현재 시세에서 평균 매입단가를 뺀 후, 이를 평균 매입단가로 나누어 수익률을 구한다
 def get_revenue_rate(balances, ticker):
@@ -97,7 +108,7 @@ def evaluate_fluctuation(balances, ticker, money, ticker_rate):
                 # 실제 매도된 금액의 오차 감안
                 if (money * 0.99) < have_coin:
                     if ticker_rate <= STOP_LOSS_THRESHOLD:
-                        amount = upbit.get_balance(ticker)       # 현재 코인 보유 수량	  
+                        amount = upbit.get_balance(ticker)       # 현재 코인 보유 수량     
                         upbit.sell_market_order(ticker, amount)   # 시장가에 매도
                 
                 # 실제 매수된 금액의 오차 감안
@@ -107,51 +118,104 @@ def evaluate_fluctuation(balances, ticker, money, ticker_rate):
                 
                 break      
     
+# 메시지 전송 함수_시작
+def post_message(token, channel, text):
+    response = requests.post(
+        "https://slack.com/api/chat.postMessage",
+        headers={"Authorization": "Bearer " + token},
+        data={"channel": channel, "text": text},
+    )
+    print(response)
 
-def main():
-    # 로그인_시작
-    try:
-        upbit = pyupbit.Upbit(access, secret)
-        my_Balance = get_balance("KRW")  # 내 잔고
-        print("Login OK")
-        print("==========Autotrade start==========")
-    except:
-        print("!!Login ERROR!!", e)
-    # 로그인_끝
-    else:
-        print("내 잔고 : " + str(format(int(my_Balance), ",")) + " 원")
-        print("date:" + str(datetime.datetime.now()))
-        # 무한 루프를 돌되, sleep()을 통해 루프 사이의 간격을 조절합니다.
-        while 1:
-            try:
-                balances = upbit.get_balances()
-                my_money = float(balances[0]['balance'])
-                money = math.floor(my_money)
-                df_day = pyupbit.get_ohlcv(TICKER, interval="day")     # 일봉 정보
-                rsi14 = get_rsi(df_day, RSI_PERIOD).iloc[-1]                          # 당일 RSI
-                before_rsi14 = get_rsi(df_day, RSI_PERIOD).iloc[-2]                   # 전날 RSI
+
+
+
+# 로그인_시작
+try:
+    upbit = pyupbit.Upbit(access, secret)
+    my_Balance = get_balance("KRW")  # 내 잔고
+    print("Login OK")
+    print("==========Autotrade start==========")
+except:
+    print("!!Login ERROR!!")
+# 로그인_끝
+else:
+    print("내 잔고 : " + str(format(int(my_Balance), ",")) + " 원")
+    print("date:" + str(datetime.datetime.now()))
+    # 무한 루프를 돌되, sleep()을 통해 루프 사이의 간격을 조절합니다.
+    while 1:
+        try:
+            balances = upbit.get_balances()
+            my_money = float(balances[0]['balance'])
+            money = math.floor(my_money)
+            df_day = pyupbit.get_ohlcv(TICKER, interval="day")     # 일봉 정보
+            rsi14 = get_rsi(df_day, RSI_PERIOD).iloc[-1]                          # 당일 RSI
+            before_rsi14 = get_rsi(df_day, RSI_PERIOD).iloc[-2]                   # 전날 RSI
+            current_price = round(get_current_price(TICKER), 0)
+            
+            if rsi14 < 30:
+                upbit.buy_market_order(TICKER, money)   # 시장가에 비트코인을 매수
+                balances = upbit.get_balances()         # 매수했으니 잔고를 최신화!
+                post_message(myToken, myChannel, " ")
+                post_message(
+                    myToken,
+                    myChannel,    
+                    str(current_price) + "원으로" + str(now) + "에 매수 성공!"
+                )
+                # sleep 붙여서 진행해볼것
                 
-                if has_coin(TICKER, balances):
-                # 매도 조건 충족
-                    if rsi14 < RSI_SELL_THRESHOLD and before_rsi14 > RSI_SELL_THRESHOLD:
-                            amount = upbit.get_balance(TICKER)       # 현재 코인 보유 수량	  
-                            upbit.sell_market_order(TICKER, amount)  # 시장가에 매도 
 
-                else:
-                # 매수 조건 충족
-                    if rsi14 > RSI_BUY_THRESHOLD and before_rsi14 < RSI_BUY_THRESHOLD:
-                        upbit.buy_market_order(TICKER, money * FIRST_BUY_RATE)    # 시장가에 코인 매수
-                
-                balances = upbit.get_balances()
-                ticker_rate = get_revenue_rate(balances, TICKER)
-                
-                evaluate_fluctuation(balances, TICKER, money, ticker_rate)
+        # 매도 조건 충족
+            elif rsi14 > 70:
+                amount = upbit.get_balance(TICKER)       # 현재 비트코인 보유 수량	  
+                upbit.sell_market_order(TICKER, amount)  # 시장가에 매도 
+                balances = upbit.get_balances()   
+                now = datetime.datetime.today().strftime("%y-%m-%d %H:%M:%S") #매수할 때 시각
+                post_message(myToken, myChannel, " ")
+                post_message(
+                    myToken,
+                    myChannel,    
+                    str(current_price) + "원으로" + str(now) + "에 매도 성공!"
+                )
+            
+            
+            
+            # if has_coin(TICKER, balances):
+            # # 매도 조건 충족
+            #     if rsi14 < RSI_SELL_THRESHOLD:
+            #             amount = upbit.get_balance(TICKER)       # 현재 코인 보유 수량     
+            #             upbit.sell_market_order(TICKER, amount)  # 시장가에 매도 
+            #             now = datetime.datetime.today().strftime("%y-%m-%d %H:%M:%S") #매수할 때 시각
+            #             post_message(myToken, myChannel, " ")
+            #             post_message(
+            #                 myToken,
+            #                 myChannel,    
+            #                 str(current_price) + "원으로" + str(now) + "에 매도 성공!"
+            #             )
+            #             time.sleep(5)
 
-            except Exception as e:
-                print(f"An unexpected error occurred: {e}")
-            finally:
-                time.sleep(1)
-    
+            # else:
+            # # 매수 조건 충족
+            #     if rsi14 > RSI_BUY_THRESHOLD and before_rsi14 < RSI_BUY_THRESHOLD:
+            #         upbit.buy_market_order(TICKER, money * FIRST_BUY_RATE)    # 시장가에 코인 매수
+            #         now = datetime.datetime.today().strftime("%y-%m-%d %H:%M:%S") #매수할 때 시각
+            #         current_price = round(get_current_price(TICKER), 0)
+            #         post_message(myToken, myChannel, " ")
+            #         post_message(
+            #             myToken,
+            #             myChannel,    
+            #             str(current_price) + "원으로" + str(now) + "에 매수 성공!"
+            #         )
+            #         time.sleep(5)
+                    
+            
+            balances = upbit.get_balances()
+            ticker_rate = get_revenue_rate(balances, TICKER)
+            
+            evaluate_fluctuation(balances, TICKER, money, ticker_rate)
 
-if __name__ == "__main__":
-    main()
+        except Exception as e:
+            print(f"An unexpected error occurred: {e}")
+        finally:
+            time.sleep(1)
+
