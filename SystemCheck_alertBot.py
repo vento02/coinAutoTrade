@@ -17,8 +17,8 @@ def nowtime():
     return now
 
 
-myToken = os.environ["Slack_RSI_Token"]  # Access Token
-myChannel = "비트코인-rsi"  # 채널 이름 OR 채널 ID
+myToken = os.environ["Slack_Token"]  # Access Token
+myChannel = "비트코인-돌파매매전략"  # 채널 이름 OR 채널 ID
 
 try:
     post_message(myToken, myChannel, " ")
@@ -34,3 +34,5 @@ except:
         myChannel,
         "!!🏴‍☠️❗🔴 Trading System Dead!!\nServer Time : " + str(nowtime()),
     )
+    
+    

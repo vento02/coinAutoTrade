@@ -11,7 +11,7 @@ TICKER = "KRW-BTC"
 access = os.environ["access"]  # Upbit API access 키
 secret = os.environ["secret"]  # Upbit API secret 키
 
-def get_rsi(df, period=RSI_PERIOD):
+def get_rsi(df, period=14):
     df['change'] = df['close'].diff()
     df['up'] = df['change'].apply(lambda x: x if x > 0 else 0)
     df['down'] = df['change'].apply(lambda x: -x if x < 0 else 0)
@@ -36,8 +36,8 @@ def nowtime():
     now = datetime.datetime.today().strftime("%y-%m-%d %H:%M:%S")  # 현재 DateTime
     return now
 
-myToken = os.environ["Slack_RSI_Token"]  # Access Token
-myChannel = "비트코인-rsi"  # 채널 이름 OR 채널 ID
+myToken = os.environ["Slack_Token"]  # Access Token
+myChannel = "비트코인-돌파매매전략"  # 채널 이름 OR 채널 ID
 
 df_day = pyupbit.get_ohlcv(TICKER, interval="day")
 rsi = get_rsi(df_day, RSI_PERIOD).iloc[-1]

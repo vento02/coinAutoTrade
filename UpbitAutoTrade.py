@@ -1,13 +1,16 @@
 # -*- coding:utf-8 -*-
 
 import time
+import requests
 import pyupbit
 import datetime
 import numpy as np
 import os
 
-access = os.environ["access"]  # Upbit API access 키
-secret = os.environ["secret"]  # Upbit API secret 키
+access = os.environ["access"]
+secret = os.environ["secret"] 
+myToken = os.environ["Slack_Token"]
+myChannel = "비트코인-돌파매매전략"  # 채널 이름 OR 채널 ID
 
 fee = 0.9995  # 거래 수수료 0.05%
 
@@ -57,6 +60,16 @@ def get_current_price(ticker):
         "ask_price"
     ]  # pyupbit==0.2.21
 
+# 메시지 전송 함수_시작
+def post_message(token, channel, text):
+    response = requests.post(
+        "https://slack.com/api/chat.postMessage",
+        headers={"Authorization": "Bearer " + token},
+        data={"channel": channel, "text": text},
+    )
+    print(response)
+
+
 
 # 로그인_시작
 try:
@@ -74,7 +87,7 @@ else:
     buy_price = 0  # 매수 총가
     while 1:
         try:
-            ticker = "KRW-DOGE"  # 종목 코드
+            ticker = "KRW-BTC"  # 종목 코드
             now = datetime.datetime.now()  # 현재시각
             start_time = get_start_time(ticker)  # 거래 시작 시각
             end_time = start_time + datetime.timedelta(days=1)  # 거래 종료 시각
@@ -133,6 +146,13 @@ else:
                             print(now, "=== Buy_" + ticker.split("-")[1] + "===")
                             # before_Buy_my_Balance = round(my_krw,0)
                             upbit.buy_market_order(ticker, my_krw * fee)  # 시장가 매수
+                            now = datetime.datetime.today().strftime("%y-%m-%d %H:%M:%S") #매수할 때 시각
+                            post_message(myToken, myChannel, " ")
+                            post_message(
+                                myToken,
+                                myChannel,    
+                                str(current_price) + "원으로" + str(now) + "에 매수 성공!"
+                            )
                             time.sleep(5)
 
                             my_ticker_bal = get_balance(ticker.split("-")[1])
@@ -145,6 +165,8 @@ else:
                             + ticker.split("-")[1]
                             + " =="
                         )
+                    
+
 
             else:  # 다음날 오픈 전 풀매도
                 best_k_run = 1
@@ -156,7 +178,14 @@ else:
                 ) > 5000:  # 보유 중인 종목의 잔고가 최소 주문금액 5000원 초과 시
                     print("My_" + ticker.split("-")[1] + "_Balance:", my_ticker_bal)
                     print(now, "=== Sell_" + ticker.split("-")[1] + "_All ===")
-                    upbit.sell_market_order(ticker, my_ticker_bal)  # 시장가 매도
+                    upbit.sell_market_order(ticker, my_ticker_bal)  #######수정 필요 # 시장가 매도
+                    now = datetime.datetime.today().strftime("%y-%m-%d %H:%M:%S") #매수할 때 시각
+                    post_message(myToken, myChannel, " ")
+                    post_message(
+                        myToken,
+                        myChannel,    
+                        str(current_price) + "원으로" + str(now) + "에 매도 성공!"
+                    )
                     time.sleep(5)
 
                     sell_price = (
