@@ -7,11 +7,10 @@ import datetime
 import numpy as np
 import os
 
-access = "002U3quMzJCiSJbCUxfNLoef7lS8ng6dmc4rcQ2s"  # Upbit API access 키
-secret = "duxbZdAmFXg1MsotEhVFiA2ozPvyyFO7fPk05Xpi"  # Upbit API secret 키
-# upbit = pyupbit.Upbit(access, secret)
-myToken = "xoxb-6271291229760-6294322066675-4RIePujfUOgfQfGwutRLXZ9i"  # Access Token
-myChannel = "비트코인-자동매매"  # 채널 이름 OR 채널 ID
+access = os.environ["access"]
+secret = os.environ["secret"] 
+myToken = os.environ["Slack_Token"]
+myChannel = "비트코인-돌파매매전략"  # 채널 이름 OR 채널 ID
 
 fee = 0.9995  # 거래 수수료 0.05%
 
@@ -179,7 +178,7 @@ else:
                 ) > 5000:  # 보유 중인 종목의 잔고가 최소 주문금액 5000원 초과 시
                     print("My_" + ticker.split("-")[1] + "_Balance:", my_ticker_bal)
                     print(now, "=== Sell_" + ticker.split("-")[1] + "_All ===")
-                    upbit.sell_market_order(ticker, my_ticker_bal) # 시장가 매도
+                    upbit.sell_market_order(ticker, my_ticker_bal)  #######수정 필요 # 시장가 매도
                     now = datetime.datetime.today().strftime("%y-%m-%d %H:%M:%S") #매수할 때 시각
                     post_message(myToken, myChannel, " ")
                     post_message(
