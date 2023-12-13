@@ -5,13 +5,22 @@ from flask import Flask, request, make_response
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 import subprocess
+import requests
+import os
  
-token = "xoxb-6271291229760-6233775300007-iuqBuwGbVFdw0J0j5uD0vRWP"
+token = os.environ["Slack_Token"]
 app = Flask(__name__)
 client = WebClient(token)
-strategy = 1
-#strategy 1이 돌파매매법임
 absolutePath = "/home/ubuntu/autoTrade/"
+myChannel = "비트코인-돌파매매전략"
+ 
+def post_message(token, channel, text):
+    response = requests.post(
+        "https://slack.com/api/chat.postMessage",
+        headers={"Authorization": "Bearer " + token},
+        data={"channel": channel, "text": text},
+    )
+    print(response)
  
 def get_day_of_week():
     weekday_list = ['월요일', '화요일', '수요일', '목요일', '금요일', '토요일', '일요일']
@@ -29,41 +38,44 @@ def get_answer(text):
     trim_text = text.replace(" ", "")
  
     answer_dict = {
-        '시작': '매매프로그램을 시작합니다.[기본은 돌파매매법입니다.]',
-        '정지': '실행중인 매매프로그램을 중지합니다.',
+        '시작1': '돌파매매법 매매프로그램을 시작합니다.',
+        '시작2': 'RSI매매법 매매프로그램을 시작합니다.',
+        '정지1': '실행중인 돌파매매법 매매프로그램을 중지합니다.',
+        '정지2': '실행중인 RSI매매법 매매프로그램을 중지합니다.',
         '잔고확인': '현재 잔고입니다.',
-        '작동확인': '프로그램이 작동중인지 확인합니다.',
-        '가격': '현재 매수목표가와 현재가를 확인합니다.',
+        '작동확인1': '돌파매매법 프로그램이 작동중인지 확인합니다.',
+        '작동확인2': 'RSI매매법 프로그램이 작동중인지 확인합니다.',
+        '가격1': '현재 매수목표가와 현재가를 확인합니다.',
+        '가격2': '현재 RSI지수와 현재가를 확인합니다.',
         '돌파매매법': '돌파매매법으로 매매법을 교체합니다.',
         'RSI매매법': 'RSI매매법으로 매매법을 교체합니다',
         '매매기법': "현재 매매기법으로는 '돌파매매법'과 'RSI매매법'이 있습니다. 매매법을 변경하고 싶으시다면, 매매법의 이름을 명령어로 입력해주세요."
     }
 
-    global strategy
 
-    if "시작" in trim_text:
-        start_program()
-        return answer_dict[trim_text]
-    elif "정지" in trim_text:
-        stop_program()
-        return answer_dict[trim_text]
-    elif "작동확인" in trim_text:
-        check_program()
-        return answer_dict[trim_text]
+
+    if "시작1" in trim_text:
+        start_program1()
+    elif "시작2" in trim_text:
+        start_program2()
+    elif "정지1" in trim_text:
+        stop_program1()
+    elif "정지2" in trim_text:
+        stop_program2()
+    elif "작동확인1" in trim_text:
+        check_program1()
+    elif "작동확인2" in trim_text:
+        check_program2()
     elif "잔고확인" in trim_text:
         check_balance()
-        return answer_dict[trim_text]
-    elif "가격" in trim_text:
-        show_target_price()
-        return answer_dict[trim_text]
+    elif "가격1" in trim_text:
+        show_target_price1()
+    elif "가격2" in trim_text:
+        show_target_price2()
     elif "돌파매매법" in trim_text:
-        strategy = 1
-        change_trading_strategy(strategy)
-        return answer_dict[trim_text]
+        change_trading_strategy1()
     elif "RSI매매법" in trim_text:
-        strategy = 2
-        change_trading_strategy(strategy)
-        return answer_dict[trim_text]
+        change_trading_strategy2()
     else:
         print("Invalid input")
 
@@ -108,45 +120,41 @@ def event_handler(event_type, slack_event):
     return make_response(message, 200, {"X-Slack-No-Retry": 1})
 
 
-def start_program():
-    if strategy == 1:
-        subprocess.Popen(["bash", absolutePath+"start.sh"])
-    elif strategy == 2:
-        subprocess.Popen(["bash", absolutePath+"startRsi.sh"])
+def start_program1():
+    subprocess.Popen(["bash", absolutePath+"start.sh"])
 
-def stop_program():
-    if strategy == 1:
-        subprocess.Popen(["bash", absolutePath+"stop.sh"])
-    elif strategy == 2:
-        subprocess.Popen(["bash", absolutePath+"stopRsi.sh"])
+def start_program2():
+    subprocess.Popen(["bash", absolutePath+"startRsi.sh"])
 
-def check_program():
-    if strategy == 1:
-        subprocess.Popen(["bash", absolutePath+"ProcessCheck.sh"])
-    elif strategy == 2:
-        subprocess.Popen(["bash", absolutePath+"RsiProcessCheck.sh"])
+def stop_program1():
+    subprocess.Popen(["bash", absolutePath+"stop.sh"])
+
+def stop_program2():
+    subprocess.Popen(["bash", absolutePath+"stopRsi.sh"])
+
+def check_program1():
+    subprocess.Popen(["bash", absolutePath+"ProcessCheck.sh"])
     
-
+    
+def check_program2():
+    subprocess.Popen(["bash", absolutePath+"RsiProcessCheck.sh"])
     
 def check_balance():
-    process = subprocess.Popen(["python", absolutePath+"balance.py"])
+    process = subprocess.Popen(["bash", absolutePath+"balance.sh"])
 
-def show_target_price():
-    if strategy == 1:
+def show_target_price1():
         subprocess.Popen(["bash", absolutePath+"Tprice_alertBot.sh"])
-    elif strategy == 2:
-        subprocess.Popen(["bash", absolutePath+"RsiPrice_alertBot.sh"])
     
+def show_target_price2():
+    subprocess.Popen(["bash", absolutePath+"RsiPrice_alertBot.sh"])
 
-def change_trading_strategy(strategy):
-    if strategy == 1:
-        subprocess.Popen(["bash", absolutePath+"stop.sh"])
-        start_program()
-    elif strategy == 2:
-        subprocess.Popen(["bash", absolutePath+"stopRsi.sh"])
-        start_program()
-    else:
-        print("Invalid strategy selected")
+def change_trading_strategy1():
+    subprocess.Popen(["bash", absolutePath+"stopRsi.sh"])
+    start_program1()
+    
+def change_trading_strategy2():
+    subprocess.Popen(["bash", absolutePath+"stop.sh"])
+    start_program2()
 
 @app.route('/', methods=['GET'])
 def index():
@@ -156,11 +164,11 @@ def index():
 @app.route('/', methods=['POST'])
 def hello_there():
     slack_event = json.loads(request.data)
-    channel_id = "C067A90JG9G"  # 메시지를 보낼 채널의 ID
+    channel_id = "C069C8Z7QAG"  # 메시지를 보낼 채널의 ID
 
     try:
         # Slack 채널에 요청 수신 알림을 보냄
-        client.chat_postMessage(channel=channel_id, text="요청을 성공적으로 받았습니다.")
+        client.chat_postMessage(channel=channel_id, text="요청을 성공적으로 받았습니다." )
 
         # 나머지 이벤트 처리 로직...
         # ...
@@ -176,9 +184,7 @@ def hello_there():
         event_type = slack_event["event"]["type"]
         return event_handler(event_type, slack_event)
     return make_response("There are no slack request events", 404, {"X-Slack-No-Retry": 1})
- 
- 
+
+
 if __name__ == '__main__':
     app.run(debug=True, port=5002)
-    
-    
