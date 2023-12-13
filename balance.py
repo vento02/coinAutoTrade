@@ -48,4 +48,3 @@ post_message(
     myChannel,
     "내 잔고 : "+str(format(int(my_Balance),','))+" 원" + "\n" + "date:"+str(datetime.datetime.now()),
     )
-
