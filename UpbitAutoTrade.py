@@ -7,11 +7,10 @@ import datetime
 import numpy as np
 import os
 
-access = "002U3quMzJCiSJbCUxfNLoef7lS8ng6dmc4rcQ2s"  # Upbit API access 키
-secret = "duxbZdAmFXg1MsotEhVFiA2ozPvyyFO7fPk05Xpi"  # Upbit API secret 키
-# upbit = pyupbit.Upbit(access, secret)
-myToken = "xoxb-6271291229760-6294322066675-4RIePujfUOgfQfGwutRLXZ9i"  # Access Token
-myChannel = "비트코인-자동매매"  # 채널 이름 OR 채널 ID
+access = os.environ["access"]  # Upbit API access 키
+secret = os.environ["secret"]   # Upbit API secret 키
+myToken = os.environ["Slack_Token"]  # Access Token
+myChannel = "비트코인-돌파매매전략"  # 채널 이름 OR 채널 ID
 
 fee = 0.9995  # 거래 수수료 0.05%
 
@@ -34,7 +33,7 @@ def get_ror(ticker, k):
 
     df["ror"] = np.where(
         df["high"] > df["target"], df["close"] / df["target"] - fee, 1
-    )  # ror(수익율), np.where(조건문, 참일때 값, 거짓일때 값)
+    )  
 
     ror = df["ror"].cumprod()[-2]
     return ror
@@ -88,10 +87,10 @@ else:
     buy_price = 0  # 매수 총가
     while 1:
         try:
-            ticker = "KRW-BTC"  # 종목 코드
-            now = datetime.datetime.now()  # 현재시각
-            start_time = get_start_time(ticker)  # 거래 시작 시각
-            end_time = start_time + datetime.timedelta(days=1)  # 거래 종료 시각
+            ticker = "KRW-BTC"  
+            now = datetime.datetime.now()  
+            start_time = get_start_time(ticker) 
+            end_time = start_time + datetime.timedelta(days=1) 
 
             # best_k 구하기_시작
             if best_k_run == 1:
@@ -100,7 +99,7 @@ else:
                     next_ror = get_ror(ticker, k)
                     time.sleep(0.3)
                     if ror1 < next_ror:  # k값중 최고 k 구하기
-                        if next_ror != 1:  # 수익률이 0% 가 아닐 때
+                        if next_ror != 1: 
                             print(
                                 "k : %.1f ror1 : %f  next_ror : %f"
                                 % (k, ror1, next_ror),
@@ -122,7 +121,6 @@ else:
                         )
                 print("best_k : %.1f  best_ror : %f" % (best_k, best_ror))
                 best_k_run = 0
-            # best_k 구하기_끝
 
             if (
                 start_time < now < end_time - datetime.timedelta(seconds=10)
@@ -132,8 +130,8 @@ else:
                 current_price = round(get_current_price(ticker), 0)
                 print("current_price:", current_price)  # 현재가
 
-                if target_price != current_price:  # 매수 목표가에 현재가 도달시
-                    my_ticker_bal = get_balance(ticker.split("-")[1])  # 종목 잔고
+                if target_price == current_price:  # 매수 목표가에 현재가 도달시
+                    my_ticker_bal = get_balance(ticker.split("-")[1])  
                     if (
                         my_ticker_bal == None or my_ticker_bal < 1.0
                     ):  # 코인 보유 여부 (없거나 한 개라도 보유)
@@ -145,7 +143,6 @@ else:
 
                         if my_krw > 5000:  # 최소 주문금액 5000원
                             print(now, "=== Buy_" + ticker.split("-")[1] + "===")
-                            # before_Buy_my_Balance = round(my_krw,0)
                             upbit.buy_market_order(ticker, my_krw * fee)  # 시장가 매수
                             now = datetime.datetime.today().strftime("%y-%m-%d %H:%M:%S") #매수할 때 시각
                             post_message(myToken, myChannel, " ")
@@ -200,5 +197,3 @@ else:
         except Exception as e:
             print(e)
             time.sleep(1)
-            
-            
