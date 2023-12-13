@@ -32,25 +32,21 @@ def get_balance(ticker):
 
 def get_rsi(df, period=RSI_PERIOD):
 
-    # 전일 대비 변동 평균
     df['change'] = df['close'].diff()
 
-    # 상승한 가격과 하락한 가격
     df['up'] = df['change'].apply(lambda x: x if x > 0 else 0)
     df['down'] = df['change'].apply(lambda x: -x if x < 0 else 0)
 
-    # 상승 평균과 하락 평균
     df['avg_up'] = df['up'].ewm(alpha=1/period).mean()
     df['avg_down'] = df['down'].ewm(alpha=1/period).mean()
 
-    # 상대강도지수(RSI) 계산
     df['rs'] = df['avg_up'] / df['avg_down']
     df['rsi'] = 100 - (100 / (1 + df['rs']))
     rsi = df['rsi']
 
     return rsi
 
-# 이미 매수한 코인인지 확인
+# 이미 매수한 코인인지 확인하는 함수
 def has_coin(ticker, balances):
     result = False
     
@@ -161,7 +157,7 @@ else:
                 time.sleep(1000)
                 
 
-        # 매도 조건 충족
+        # 매도 조건 충족 시
             elif rsi14 > 70:
                 amount = upbit.get_balance(TICKER)     
                 upbit.sell_market_order(TICKER, amount)  
