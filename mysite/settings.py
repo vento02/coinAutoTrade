@@ -21,7 +21,7 @@ env = environ.Env()
 env_path = BASE_DIR / ".env"
 if env_path.exists():
     with env_path.open("rt", encoding="utf8") as f:
-        env.read_env(f)
+        environ.Env.read_env(f)
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
 
@@ -34,7 +34,7 @@ SECRET_KEY = env.str(
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env.bool("DEBUG", default=True)
 
-ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[])
+ALLOWED_HOSTS = ["*"]
 
 
 # Application definition
@@ -87,7 +87,7 @@ WSGI_APPLICATION = "mysite.wsgi.application"
 
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
-env.db("DATABASE_URL", default="sqlite://db.sqlite3")
+env.db("DATABASE_URL", default="sqlite:///db.sqlite3")
 DATABASES = {
     "default": env.db("DATABASE_URL", default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}"),
 }
@@ -111,13 +111,13 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
+AUTH_USER_MODEL = "accounts.User"
 # Internationalization
 # https://docs.djangoproject.com/en/4.1/topics/i18n/
 
 LANGUAGE_CODE = env.str("LANGUAGE_CODE", default="ko-kr")
 
-TIME_ZONE = "UTC"
+TIME_ZONE = "Asia/Seoul"
 
 USE_I18N = True
 
@@ -129,6 +129,9 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 STATIC_ROOT = env.str("STATIC_ROOT", default=BASE_DIR / "staticfiles")
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
+]
 
 MEDIA_URL = "media/"
 MEDIA_ROOT = env.str("MEDIA_ROOT", default=BASE_DIR / "mediafiles")
