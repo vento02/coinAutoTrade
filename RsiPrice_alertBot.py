@@ -36,7 +36,7 @@ def nowtime():
     now = datetime.datetime.today().strftime("%y-%m-%d %H:%M:%S")  # 현재 DateTime
     return now
 
-myToken = os.environ["Slack_Token"]  # Access Token
+myToken = os.environ["Slack_Token"] 
 myChannel = "비트코인-자동매매-1"  # 채널 이름 OR 채널 ID
 
 df_day = pyupbit.get_ohlcv(TICKER, interval="day")

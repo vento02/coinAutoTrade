@@ -140,7 +140,7 @@ def check_program2():
     subprocess.Popen(["bash", absolutePath+"RsiProcessCheck.sh"])
     
 def check_balance():
-    process = subprocess.Popen(["bash", absolutePath+"balance.sh"])
+    process = subprocess.Popen(["bash", absolutePath+"BalanceCheck.sh"])
 
 def show_target_price1():
         subprocess.Popen(["bash", absolutePath+"Tprice_alertBot.sh"])
