@@ -8,7 +8,7 @@ import requests
 access = os.environ['access']                           # Upbit API access 키
 secret = os.environ['secret']                           # Upbit API secret 키
 myToken = os.environ["Slack_Token"]  # Access Token
-myChannel = "비트코인-자동매매"  # 채널 이름 OR 채널 ID
+myChannel = "비트코인-자동매매-1"  # 채널 이름 OR 채널 ID
 # 내 잔고 조회_시작
 def get_balance(ticker):
       balances = upbit.get_balances()

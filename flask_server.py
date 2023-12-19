@@ -12,7 +12,7 @@ token = os.environ["Slack_Token"]
 app = Flask(__name__)
 client = WebClient(token)
 absolutePath = "/home/ubuntu/autoTrade/"
-myChannel = "비트코인-돌파매매전략"
+myChannel = "비트코인-자동매매-1"
  
 def post_message(token, channel, text):
     response = requests.post(

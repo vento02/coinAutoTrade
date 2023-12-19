@@ -10,7 +10,7 @@ import os
 access = os.environ["access"]
 secret = os.environ["secret"] 
 myToken = os.environ["Slack_Token"]
-myChannel = "비트코인-돌파매매전략"  # 채널 이름 OR 채널 ID
+myChannel = "비트코인-자동매매-1"  # 채널 이름 OR 채널 ID
 
 fee = 0.9995  # 거래 수수료 0.05%
 

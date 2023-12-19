@@ -37,7 +37,7 @@ def nowtime():
     return now
 
 myToken = os.environ["Slack_Token"]  # Access Token
-myChannel = "비트코인-돌파매매전략"  # 채널 이름 OR 채널 ID
+myChannel = "비트코인-자동매매-1"  # 채널 이름 OR 채널 ID
 
 df_day = pyupbit.get_ohlcv(TICKER, interval="day")
 rsi = get_rsi(df_day, RSI_PERIOD).iloc[-1]

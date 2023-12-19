@@ -18,8 +18,7 @@ TICKER = "KRW-BTC"
 access = os.environ["access"]  # Upbit API access 키
 secret = os.environ["secret"]   # Upbit API secret 키
 myToken = os.environ["Slack_Token"]  # Access Token
-myChannel = "비트코인-돌파매매전략"  # 채널 이름 OR 채널 ID
-# 수수료 아직 설정안해놓음
+myChannel = "비트코인-자동매매-1"  # 채널 이름 OR 채널 ID
 
 def get_balance(ticker):
     balances = upbit.get_balances()
@@ -62,7 +61,7 @@ def has_coin(ticker, balances):
 def get_current_price(ticker):
     return pyupbit.get_orderbook(ticker=ticker)["orderbook_units"][0][
         "ask_price"
-    ]  # pyupbit==0.2.21
+    ]  
 
 # 수익률 확인 함수
 def get_revenue_rate(balances, ticker):
@@ -142,7 +141,6 @@ else:
             money = math.floor(my_money)
             df_day = pyupbit.get_ohlcv(TICKER, interval="day")   
             rsi14 = get_rsi(df_day, RSI_PERIOD).iloc[-1]                          # 당일 RSI
-            before_rsi14 = get_rsi(df_day, RSI_PERIOD).iloc[-2]                   # 전날 RSI
             current_price = round(get_current_price(TICKER), 0)
             
             if rsi14 < 30:
