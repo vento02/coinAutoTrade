@@ -80,12 +80,6 @@ def get_revenue_rate(balances, ticker):
     return revenue_rate
 
 def evaluate_fluctuation(balances, ticker, money, ticker_rate):
-    # 실제로 매도하다 보면, 단위와 주문 시간의 오차로 인해 금액간에 오차가 발생하는 경우가 있다.
-    # 주문한 금액과 실제 주문된 금액의 오차를 감안하기 위해 모수 매수된 상태는 0.99를,
-    # 최초 50% 매수된 상태는 0.49를 곱하는 것으로 확인하였다.
-    # 만약 코인에 할당된 금액이 모두 매수 되었을 때는 수익률이 -7% 이하일 때 매도를 진행하고, 
-    # 최초로 매수한 코인만 존재할 때는 수익률이 -5% 이하일 때 물을 타주도록 하였다.
-    # 이 부분은 이해가 어렵다면 지워도 될 듯
     have_coin = 0.0
     for coin in balances:
         coin_ticker = coin['unit_currency'] + "-" + coin['currency']
