@@ -12,7 +12,7 @@ token = os.environ["Slack_Token"]
 app = Flask(__name__)
 client = WebClient(token)
 absolutePath = "/home/ubuntu/autoTrade/"
-myChannel = "비트코인-돌파매매전략"
+myChannel = "비트코인-자동매매-1"
  
 def post_message(token, channel, text):
     response = requests.post(
@@ -140,7 +140,7 @@ def check_program2():
     subprocess.Popen(["bash", absolutePath+"RsiProcessCheck.sh"])
     
 def check_balance():
-    process = subprocess.Popen(["bash", absolutePath+"balance.sh"])
+    process = subprocess.Popen(["bash", absolutePath+"BalanceCheck.sh"])
 
 def show_target_price1():
         subprocess.Popen(["bash", absolutePath+"Tprice_alertBot.sh"])

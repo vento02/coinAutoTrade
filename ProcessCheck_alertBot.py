@@ -19,7 +19,7 @@ def nowtime():
 
 
 myToken = os.environ["Slack_Token"]  # Access Token
-myChannel = "비트코인-돌파매매전략"  # 채널 이름 OR 채널 ID
+myChannel = "비트코인-자동매매-1"  # 채널 이름 OR 채널 ID
 ProcessStatus = str(sys.argv[1])  # 프로세스 상태 코드 (매개 변수)
 
 try:

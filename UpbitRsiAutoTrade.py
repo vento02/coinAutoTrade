@@ -18,8 +18,7 @@ TICKER = "KRW-BTC"
 access = os.environ["access"]  # Upbit API access 키
 secret = os.environ["secret"]   # Upbit API secret 키
 myToken = os.environ["Slack_Token"]  # Access Token
-myChannel = "비트코인-돌파매매전략"  # 채널 이름 OR 채널 ID
-# 수수료 아직 설정안해놓음
+myChannel = "비트코인-자동매매-1"  # 채널 이름 OR 채널 ID
 
 def get_balance(ticker):
     balances = upbit.get_balances()
@@ -62,7 +61,7 @@ def has_coin(ticker, balances):
 def get_current_price(ticker):
     return pyupbit.get_orderbook(ticker=ticker)["orderbook_units"][0][
         "ask_price"
-    ]  # pyupbit==0.2.21
+    ]  
 
 # 수익률 확인 함수
 def get_revenue_rate(balances, ticker):
@@ -81,12 +80,6 @@ def get_revenue_rate(balances, ticker):
     return revenue_rate
 
 def evaluate_fluctuation(balances, ticker, money, ticker_rate):
-    # 실제로 매도하다 보면, 단위와 주문 시간의 오차로 인해 금액간에 오차가 발생하는 경우가 있다.
-    # 주문한 금액과 실제 주문된 금액의 오차를 감안하기 위해 모수 매수된 상태는 0.99를,
-    # 최초 50% 매수된 상태는 0.49를 곱하는 것으로 확인하였다.
-    # 만약 코인에 할당된 금액이 모두 매수 되었을 때는 수익률이 -7% 이하일 때 매도를 진행하고, 
-    # 최초로 매수한 코인만 존재할 때는 수익률이 -5% 이하일 때 물을 타주도록 하였다.
-    # 이 부분은 이해가 어렵다면 지워도 될 듯
     have_coin = 0.0
     for coin in balances:
         coin_ticker = coin['unit_currency'] + "-" + coin['currency']
@@ -142,7 +135,6 @@ else:
             money = math.floor(my_money)
             df_day = pyupbit.get_ohlcv(TICKER, interval="day")   
             rsi14 = get_rsi(df_day, RSI_PERIOD).iloc[-1]                          # 당일 RSI
-            before_rsi14 = get_rsi(df_day, RSI_PERIOD).iloc[-2]                   # 전날 RSI
             current_price = round(get_current_price(TICKER), 0)
             
             if rsi14 < 30:

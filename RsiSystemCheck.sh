@@ -1,6 +1,6 @@
 #!/bin/bash
 
-. ~ubuntu/.profile # ~뒤에 이 파일을 실행 할 사용자 입력
+. ~ubuntu/.profile 
 cd $env_autoTrade_Dir
 
 python3 RsiSystemCheck_alertBot.py
